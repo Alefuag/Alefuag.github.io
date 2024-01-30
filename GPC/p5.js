@@ -1,10 +1,12 @@
 
-import * as THREE from "../lib/three.module.js"
-import {GLTFLoader} from "../lib/GLTFLoader.module.js"
-import { OrbitControls } from "../lib/OrbitControls.module.js";
-import { TWEEN } from "../lib/tween.module.min.js"
-import { GUI } from "../lib/lil-gui.module.min.js";
+import * as THREE from "./lib/three.module.js"
+import {GLTFLoader} from "./lib/GLTFLoader.module.js"
+import { OrbitControls } from "./lib/OrbitControls.module.js";
+import { TWEEN } from "./lib/tween.module.min.js"
+import { GUI } from "./lib/lil-gui.module.min.js";
 // import { stats } from "../lib/stats.module.js";
+
+
 
 //variables estandar
 let renderer, scene, camera, top_camera, controls;
@@ -14,10 +16,12 @@ let material, robot_material, angulo = 0;
 let clock = new THREE.Clock();
 let robot_speed = 100;
 let right_arrow = false, left_arrow = false, up_arrow = false, down_arrow = false;
+let AmbientLight, directionalLight, pointLight, spotLight;
 
 //Acciones
 init();
 loadScene();
+initLighting();
 initGUI();
 render();
 
@@ -86,14 +90,15 @@ function robotAnimation() {
     baseTween.start()
 }
 
-
-
 function init() {
     var WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
     var minDim = Math.min(WIDTH, HEIGHT);
 
     renderer = new THREE.WebGLRenderer( {antialias: true} )
-    // renderer.autoClear = false;
+    // Enable shadows
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;   
+
     renderer.setSize(window.innerWidth, window.innerHeight)
 
     document.getElementById('container').appendChild(renderer.domElement)
@@ -127,6 +132,53 @@ function rad_to_deg(radians) {
     return radians * (180/Math.PI);
 }
 
+function initLighting() {
+    var ambient = new THREE.AmbientLight(0xffffff, 0.3)
+    // ambient.castShadow = true;
+    scene.add(ambient)
+
+    directionalLight = new THREE.DirectionalLight(0xffffff, 1)
+    directionalLight.position.set(500, 1000, -200)
+    directionalLight.castShadow = true;
+    directionalLight.shadow.camera.near = 1;
+    directionalLight.shadow.camera.far = 5000;
+    // directionalLight.shadow.camera.visible = true;
+    directionalLight.shadow.camera.left = -1000;
+    directionalLight.shadow.camera.right = 1000;
+    directionalLight.shadow.camera.top = 1000;
+    directionalLight.shadow.camera.bottom = -1000;
+    directionalLight.shadow.mapSize.width = 2048;
+    directionalLight.shadow.mapSize.height = 2048;
+    scene.add(directionalLight)
+
+    // pointLight = new THREE.PointLight(0x0000ff, 5, 1000)
+    // pointLight.position.set(50, 100, 0)
+    // pointLight.castShadow = true;
+    // pointLight.shadow.camera.near = 0.1;
+    // pointLight.shadow.camera.far = 1000;
+    // pointLight.shadow.mapSize.width = 2048;
+    // pointLight.shadow.mapSize.height = 2048;
+    // // pointLight.shadow.camera.visible = true;
+    // scene.add(pointLight)
+
+    spotLight = new THREE.SpotLight( 0x0000ff, 1 );
+    spotLight.position.set( -50, 400, 50 );
+    spotLight.castShadow = true;
+    spotLight.shadow.mapSize.width = 2048;
+    spotLight.shadow.mapSize.height = 2048;
+    spotLight.shadow.camera.near = 10;
+    spotLight.shadow.camera.far = 1000;
+    spotLight.shadow.camera.fov = 15;
+
+    scene.add( spotLight );
+
+    // const helper = new THREE.CameraHelper( directionalLight.shadow.camera );
+    // scene.add( helper );
+
+    // const helper2 = new THREE.CameraHelper( pointLight.shadow.camera );
+    // scene.add( helper2 );
+}
+
 function initGUI() {
     const gui = new GUI()
     // create degrees variable for each joint
@@ -148,40 +200,94 @@ function initGUI() {
 }
 
 function loadScene() {
-    material = new THREE.MeshBasicMaterial({color:'yellow', wireframe:false})
-    // const material = new THREE.MeshNormalMaterial({wireframe:false, flatShading:true})
-
+    // material = new THREE.MeshBasicMaterial({color:'yellow', wireframe:false})
+    // material = new THREE.MeshNormalMaterial({wireframe:false, flatShading:true})
+    material = new THREE.MeshPhongMaterial({color:'white', wireframe:false})
+    
     const suelo = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000, 500, 500), material)
     suelo.rotation.x = -Math.PI/2;
     suelo.position.y = 0.2;
-
+    suelo.receiveShadow = true;
+    
     scene.add(suelo)
+    
+    // add image texture to the ground
+    var loader = new THREE.TextureLoader();
+    var basepath = './practs/interstellar_skybox/';
+    loader.setPath( basepath );
+    var texture = loader.load('floor.jpg');
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set( 1, 1 );
+    suelo.material.map = texture;
+
+    // añadir skybox
+    var loader = new THREE.CubeTextureLoader();
+    var basepath = './practs/interstellar_skybox/';
+    loader.setPath( basepath );
+    var textureCube = loader.load([
+        'xpos.png', 'xneg.png',
+        'ypos.png', 'yneg.png',
+        'zpos.png', 'zneg.png'
+    ]);
+    textureCube.format = THREE.RGBAFormat;
+    
+    
+    //add background texture
+    scene.background = textureCube;
+    
+
+    // añadir textura del robot
+    var loader = new THREE.TextureLoader();
+    var basepath = './practs/interstellar_skybox/';
+    loader.setPath( basepath );
+    var robot_texture = loader.load('metal_oclussion.jpg');
+    robot_texture.wrapS = THREE.RepeatWrapping;
+    robot_texture.wrapT = THREE.RepeatWrapping;
+
+    
 
     robot = new THREE.Object3D()
-    // const robot_material = new THREE.MeshBasicMaterial({color:'red', wireframe:true})
-    robot_material = new THREE.MeshNormalMaterial({wireframe:false, flatShading:true})
+    robot.castShadow = true;
+    robot.receiveShadow = true;
 
+    //  robot_material = new THREE.MeshBasicMaterial({color:'red', wireframe:false})
+    // robot_material = new THREE.MeshNormalMaterial({wireframe:false, flatShading:true})
+    robot_material = new THREE.MeshPhongMaterial({color:'gray', wireframe:false, map:robot_texture})
+    var reflective_material = new THREE.MeshPhongMaterial({color:'white', wireframe:false, envMap:textureCube, reflectivity:0.9})
+    var lamb_material = new THREE.MeshLambertMaterial({color:'red', wireframe:false})
+    
     const base_geometry = new THREE.CylinderGeometry(50, 50, 15, 30)
     const base_mesh = new THREE.Mesh(base_geometry, robot_material)
     base_mesh.position.y = 10;
+    base_mesh.castShadow = true;
+    base_mesh.receiveShadow = true;
     
     brazo = new THREE.Object3D()
     const eje_geometry = new THREE.CylinderGeometry(20, 20, 18, 30)
     const eje_mesh = new THREE.Mesh(eje_geometry, robot_material)
     eje_mesh.rotation.x = Math.PI/2;
+    eje_mesh.castShadow = true;
+    eje_mesh.receiveShadow = true;
 
     const esparrago_geometry = new THREE.BoxGeometry(12, 120, 18)
     const esparrago_mesh = new THREE.Mesh(esparrago_geometry, robot_material)
     esparrago_mesh.position.y = 60;
+    esparrago_mesh.castShadow = true;
+    esparrago_mesh.receiveShadow = true;
 
     const rotula_geometry = new THREE.SphereGeometry(20, 20, 20)
-    const rotula_mesh = new THREE.Mesh(rotula_geometry, robot_material)
+    const rotula_mesh = new THREE.Mesh(rotula_geometry, reflective_material)
     rotula_mesh.position.y = 120
+    rotula_mesh.castShadow = true;
+    rotula_mesh.receiveShadow = true;
 
     antebrazo = new THREE.Object3D()
     const disco_geometry = new THREE.CylinderGeometry(22, 22, 6, 30)
     const disco_mesh = new THREE.Mesh(disco_geometry, robot_material)
     disco_mesh.position.y = 0
+    disco_mesh.castShadow = true;
+    disco_mesh.receiveShadow = true;
 
     const nervios_geometry = new THREE.BoxGeometry(4, 80, 4)
     const nervio1 = new THREE.Mesh(nervios_geometry, robot_material)
@@ -205,11 +311,22 @@ function loadScene() {
     nervio4.position.y = 46
     nervio4.position.z -= 10
 
+    nervio1.castShadow = true;
+    nervio1.receiveShadow = true;
+    nervio2.castShadow = true;
+    nervio2.receiveShadow = true;
+    nervio3.castShadow = true;
+    nervio3.receiveShadow = true;
+    nervio4.castShadow = true;
+    nervio4.receiveShadow = true;
+
     mano = new THREE.Object3D()
     const mano_geometry = new THREE.CylinderGeometry(15, 15, 40, 30);
     const mano_mesh = new THREE.Mesh(mano_geometry, robot_material)
     mano_mesh.position.y = 0;
     mano_mesh.rotation.x = Math.PI/2;
+    mano_mesh.castShadow = true;
+    mano_mesh.receiveShadow = true;
 
     const pinza_geometry = new THREE.BufferGeometry()
     const vertices = [ //12 vertices x 3 coord = 36
@@ -237,6 +354,7 @@ function loadScene() {
         8, 1, 3, 8, 3, 10, 
     ]
 
+
     pinza_geometry.setIndex(indices)
     pinza_geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
     pinza_geometry.computeVertexNormals()
@@ -249,9 +367,13 @@ function loadScene() {
     const pinza_mesh2 = new THREE.Mesh(pinza_geometry, robot_material)
     
     pinza_mesh1.position.set(0, -10, 15)
+    pinza_mesh1.castShadow = true;
+    pinza_mesh1.receiveShadow = true;
     
     pinza_mesh2.rotation.x = Math.PI
     pinza_mesh2.position.set(0, 10, -15)
+    pinza_mesh2.castShadow = true;
+    pinza_mesh2.receiveShadow = true;
     
     mano.position.y = 86
 

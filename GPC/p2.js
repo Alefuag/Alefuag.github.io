@@ -1,11 +1,11 @@
 
-import * as THREE from "../lib/three.module.js"
-import {GLTFLoader} from "../lib/GLTFLoader.module.js"
-import { OrbitControls } from "../lib/OrbitControls.module.js";
-import {TWEEN} from "../lib/tween.module.min.js"
+import * as THREE from "./lib/three.module.js"
+import {GLTFLoader} from "./lib/GLTFLoader.module.js"
+import { OrbitControls } from "./lib/OrbitControls.module.js";
+import {TWEEN} from "./lib/tween.module.min.js"
 
 //variables estandar
-let renderer, scene, camera, top_camera, controls;
+let renderer, scene, camera, controls;
 //Otras globales
 let robot, brazo, antebrazo, mano, pinza1, pinza2;
 let angulo = 0;
@@ -20,36 +20,24 @@ render();
 
 
 function init() {
-    var WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
-    var minDim = Math.min(WIDTH, HEIGHT);
-
-    renderer = new THREE.WebGLRenderer( {antialias: true} )
-    // renderer.autoClear = false;
+    renderer = new THREE.WebGLRenderer()
     renderer.setSize(window.innerWidth, window.innerHeight)
 
     document.getElementById('container').appendChild(renderer.domElement)
-
     //Instanciar el nodo raíz
     scene = new THREE.Scene()
+    // scene.background = new THREE.Color(0.5, 0.05, 0.05)
     scene.background = new THREE.Color( 0x220044 )
-    // scene.background = new THREE.Color( 0xaaaaaa )
 
     camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 500)
-    camera.position.set(20, 200, 100);
-    camera.lookAt(0, 60, 0);
-    // scene.add(camera);
 
-    top_camera = new THREE.OrthographicCamera(-100, 100, 100, -100, 1, 1000)
-    top_camera.position.set(0, 300, 0)
-    top_camera.lookAt(0, 0, 0)
-    // scene.add(top_camera)
-
+    camera.position.set(20, 200, 100)
+    // camera.lookAt(0, 60, 0)
     controls = new OrbitControls( camera, renderer.domElement );
 }
 
 function loadScene() {
     const material = new THREE.MeshBasicMaterial({color:'yellow', wireframe:false})
-    // const material = new THREE.MeshNormalMaterial({wireframe:false, flatShading:true})
 
     const suelo = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000, 500, 500), material)
     suelo.rotation.x = -Math.PI/2;
@@ -58,8 +46,7 @@ function loadScene() {
     scene.add(suelo)
 
     robot = new THREE.Object3D()
-    // const robot_material = new THREE.MeshBasicMaterial({color:'red', wireframe:true})
-    const robot_material = new THREE.MeshNormalMaterial({wireframe:false, flatShading:true})
+    const robot_material = new THREE.MeshBasicMaterial({color:'red', wireframe:true})
 
     const base_geometry = new THREE.CylinderGeometry(50, 50, 15, 30)
     const base_mesh = new THREE.Mesh(base_geometry, robot_material)
@@ -186,20 +173,11 @@ function loadScene() {
     scene.add(robot)
     
     
-    
+    // camera.lookAt(robot.position.x, robot.position.y + 10, robot.position.z)
     controls.target.set(robot.position.x, robot.position.y + 160, robot.position.z);
-    controls.listenToKeyEvents( window );
-    controls.minDistance = 50;
-	controls.maxDistance = 500;
     controls.update()
-    controls.mouseButtons = {
-        LEFT: THREE.MOUSE.ROTATE,
-        MIDDLE: THREE.MOUSE.DOLLY,
-        RIGHT: THREE.MOUSE.PAN
-    }
 
-    brazo.rotation.z = Math.PI/8
-    antebrazo.rotation.z = -Math.PI/2
+    // brazo.rotation.z = Math.PI/4
 
 }
 
@@ -214,25 +192,11 @@ function update() {
 }
 
 function render() {
-    var WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
-    var minDim = Math.min(WIDTH, HEIGHT);
-    
     requestAnimationFrame(render)
     update();
-
-    // renderer.setViewport(0, 0, WIDTH, HEIGHT)
-    renderer.autoClear = false
-    
-    renderer.setSize(WIDTH, HEIGHT)
-    renderer.setViewport(0, 0, WIDTH, HEIGHT)
     renderer.render(scene, camera)
-    
-    
-    renderer.setScissorTest(true)
-    renderer.setScissor(0, HEIGHT-minDim/4,  minDim/4, minDim/4)
-    renderer.setViewport(0, HEIGHT-minDim/4, minDim/4, minDim/4)
-    renderer.render(scene, top_camera)
-    renderer.setScissorTest(false)
 }
+
+
 
 
