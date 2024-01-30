@@ -290,10 +290,10 @@ function loadScene() {
     disco_mesh.receiveShadow = true;
 
     const nervios_geometry = new THREE.BoxGeometry(4, 80, 4)
-    const nervio1 = new THREE.Mesh(nervios_geometry, robot_material)
-    const nervio2 = new THREE.Mesh(nervios_geometry, robot_material)
-    const nervio3 = new THREE.Mesh(nervios_geometry, robot_material)
-    const nervio4 = new THREE.Mesh(nervios_geometry, robot_material)
+    const nervio1 = new THREE.Mesh(nervios_geometry, lamb_material)
+    const nervio2 = new THREE.Mesh(nervios_geometry, lamb_material)
+    const nervio3 = new THREE.Mesh(nervios_geometry, lamb_material)
+    const nervio4 = new THREE.Mesh(nervios_geometry, lamb_material)
 
     nervio1.position.x += 10
     nervio1.position.y = 46
