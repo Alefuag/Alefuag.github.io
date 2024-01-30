@@ -213,7 +213,7 @@ function loadScene() {
     
     // add image texture to the ground
     var loader = new THREE.TextureLoader();
-    var basepath = './practs/interstellar_skybox/';
+    var basepath = './interstellar_skybox/';
     loader.setPath( basepath );
     var texture = loader.load('floor.jpg');
     texture.wrapS = THREE.RepeatWrapping;
@@ -223,7 +223,7 @@ function loadScene() {
 
     // añadir skybox
     var loader = new THREE.CubeTextureLoader();
-    var basepath = './practs/interstellar_skybox/';
+    var basepath = './interstellar_skybox/';
     loader.setPath( basepath );
     var textureCube = loader.load([
         'xpos.png', 'xneg.png',
@@ -239,7 +239,7 @@ function loadScene() {
 
     // añadir textura del robot
     var loader = new THREE.TextureLoader();
-    var basepath = './practs/interstellar_skybox/';
+    var basepath = './interstellar_skybox/';
     loader.setPath( basepath );
     var robot_texture = loader.load('metal_oclussion.jpg');
     robot_texture.wrapS = THREE.RepeatWrapping;
