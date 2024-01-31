@@ -12,9 +12,9 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 //variables estandar
 let renderer, scene, camera, top_camera, controls;
 
-let playerMaterial, floor_material, material;
+let playerMaterial, floor_material, brick_material, material;
 let clock = new THREE.Clock();
-let speed = 500, num_obstaculos = 200, distancia_entre_obstaculos = 1000;
+let speed = 500, num_obstaculos = 200, distancia_entre_obstaculos = 500;
 let right_arrow = false, left_arrow = false, up_arrow = false, down_arrow = false;
 let AmbientLight, directionalLight, pointLight, spotLight;
 let player, playerBody, obstacles = [], obstacleBodies = [], world;
@@ -93,6 +93,7 @@ function loadScene() {
     material = new THREE.MeshPhongMaterial({color:'white', wireframe:false})
     floor_material = new THREE.MeshPhongMaterial({color:'white', wireframe:false})
     playerMaterial = new THREE.MeshPhongMaterial({color:'white', wireframe:false})
+    brick_material = new THREE.MeshPhongMaterial({color:'white', wireframe:false})
     
     // add floor
     const suelo = new THREE.Mesh(new THREE.PlaneGeometry(1000, 100000, 500, 500), material)
@@ -133,6 +134,15 @@ function loadScene() {
     texture.repeat.set( 5, 100 );
     suelo.material.map = texture;
 
+    // add image texture to the walls
+    var loader = new THREE.TextureLoader();
+    loader.setPath( basepath );
+    var brick_texture = loader.load('brick.jpg');
+    brick_texture.wrapS = THREE.RepeatWrapping;
+    brick_texture.wrapT = THREE.RepeatWrapping;
+    brick_texture.repeat.set( 5, 1 );
+    brick_material.map = brick_texture;
+
     // añadir skybox
     var loader = new THREE.CubeTextureLoader();
     var basepath = './interstellar_skybox/';
@@ -156,7 +166,7 @@ function loadScene() {
 
     // Generate random obstacles
     for (let i = 0; i < num_obstaculos; i++) {
-        const obstacle = new THREE.Mesh(new THREE.BoxGeometry(100 + 250*Math.random(), 50, 50), material);
+        const obstacle = new THREE.Mesh(new THREE.BoxGeometry(100 + 250*Math.random(), 50, 50), brick_material);
         const x = Math.random() * 800 - 400; // Random x position between -450 and 450
         const y = 25; // Fixed y position
         const z = distancia_entre_obstaculos*(i+1);
@@ -296,7 +306,7 @@ function initCannon() {
         const depth = obstacles[i].geometry.parameters.depth;
 
         const obstacleBody = new CANNON.Body({
-            shape: new CANNON.Box(new CANNON.Vec3(height/2, width/2, depth/2)),
+            shape: new CANNON.Box( new CANNON.Vec3(width/2, height/2, depth/2) ),
             position: new CANNON.Vec3(x, y, z),
             type: CANNON.Body.STATIC,
             material: groundCannonMaterial,
@@ -352,10 +362,10 @@ function update() {
     camera.lookAt(new THREE.Vector3(player.position.x, player.position.y + 50, player.position.z));
 
     // update obstacles
-    // for (let i = 0; i < obstacles.length; i++) {
-    //     obstacles[i].position.copy(obstacles[i].body.position);
-    //     obstacles[i].quaternion.copy(obstacles[i].body.quaternion);
-    // }
+    for (let i = 0; i < obstacles.length; i++) {
+        obstacles[i].position.copy(obstacleBodies[i].position);
+        obstacles[i].quaternion.copy(obstacleBodies[i].quaternion);
+    }
 
 }
 
