@@ -14,7 +14,7 @@ let renderer, scene, camera, top_camera, controls;
 
 let playerMaterial, floor_material, brick_material, material;
 let clock = new THREE.Clock();
-let speed = 500, num_obstaculos = 200, distancia_entre_obstaculos = 500;
+let speed = 1000, lat_speed = 500, num_obstaculos = 200, distancia_entre_obstaculos = 500;
 let right_arrow = false, left_arrow = false, up_arrow = false, down_arrow = false;
 let AmbientLight, directionalLight, pointLight, spotLight;
 let player, playerBody, obstacles = [], obstacleBodies = [], world;
@@ -229,15 +229,28 @@ function initGUI() {
     const gui = new GUI()
     // create degrees variable for each joint
     var playpause = {play: function() {clock.start(); }, pause: function() {clock.stop()}}
+    var userSpeed = {speed: speed, lat_speed: lat_speed}
+
 
     gui.add({start: startGame}, 'start').name('Start Game (S)')
     gui.add(playpause, 'play').name('Play (Space)')
     gui.add(playpause, 'pause').name('Pause (P)')
+    gui.add(userSpeed, 'speed', 100, 2000).name('Speed').onChange(
+        function(value) {
+            speed = value;
+        }
+    );
+    gui.add(userSpeed, 'lat_speed', 100, 1000).name('Lateral Speed').onChange(
+        function(value) {
+            lat_speed = value;
+        }
+    );
+
 }
 
 function startGame() {
     clock.start();
-    playerBody.velocity.set(0, 0, 1000);
+    playerBody.velocity.set(0, 0, speed);
 }
 
 function initCannon() {
@@ -339,7 +352,7 @@ function update() {
         move_left(delta);
     }
     if (up_arrow) {
-        // jump(delta);
+        jump(delta);
     }
     if (down_arrow) {
         dont_move(delta);
@@ -374,7 +387,7 @@ function move_right(delta) {
 }
 
 function jump(delta) {
-    playerBody.velocity.y = 100;
+    playerBody.velocity.y = 50;
 }
 
 function move_left(delta) {
